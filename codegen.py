@@ -397,7 +397,24 @@ class SourceGenerator(NodeVisitor):
         self.write(node.id)
 
     def visit_Str(self, node):
-        self.write(repr(node.s))
+        # If we have newlines, and '>>>' it means we probably have a doctest.
+        # We need to write back triple-quoted strings in that case, and not
+        # a repr(node.s)
+        if '\n' in node.s and '>>>' in node.s:
+            if '"""' not in node.s:
+                self.write('"""')
+                self.write(node.s)
+                self.write('"""')
+            elif "'''" not in node.s:
+                self.write("'''")
+                self.write(node.s)
+                self.write("'''")
+            else:
+                # Seriously, you wrote a string with both ''' and """ in it?
+                # I have no idea what to do now!
+                self.write(repr(node.s))
+        else:
+            self.write(repr(node.s))
 
     def visit_Bytes(self, node):
         self.write(repr(node.s))
